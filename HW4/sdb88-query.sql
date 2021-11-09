@@ -118,12 +118,12 @@ WHERE f.forest_no IN (
     ) AND acid_level > 0.6;
 
 --(g)
---SELECT *
---FROM INTERSECTION i RIGHT OUTER JOIN(
---          SELECT i2.road_no
---          FROM FOREST f2 JOIN INTERSECTION i2 on f2.forest_no = i2.forest_no
---          WHERE f2.name = 'Big Woods') AS i3 on i.road_no=i3.road_no;
---WHERE i3.road_no IS NOT NULL;
+SELECT *
+FROM INTERSECTION i RIGHT OUTER JOIN(
+         SELECT i2.road_no
+         FROM FOREST f2 JOIN INTERSECTION i2 on f2.forest_no = i2.forest_no
+         WHERE f2.name = 'Big Woods') AS i3 on i.road_no=i3.road_no
+WHERE i3.road_no IS NOT NULL;
 
 
 --(h)

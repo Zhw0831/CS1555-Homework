@@ -133,15 +133,37 @@ INSERT INTO REPORT VALUES (4,TO_TIMESTAMP('12/6/2020 22:00', 'mm/dd/yyyy hh24:mi
 ---------QUESTION 2----------------
 -----------------------------------
 ---A
-INSERT INTO ROAD VALUES(105, "Route Five", 426);
-INSERT INTO INTERSECTION(1, 105);
+INSERT INTO ROAD VALUES(105, 'Route Five', 426);
+INSERT INTO INTERSECTION VALUES(1, 105);
 
 ---B
 ---I DO NOT UNDERSTAND
+UPDATE SENSOR SET maintainer = (NESTED QUERY TO GET THE SSN FOR THE PPL)
 
 ---C
 INSERT INTO WORKER (ssn, name,  rank, employing_state) VALUES ('105588973','Natalia',1, 'OH');
-UPDATE 
+UPDATE SENSOR SET maintainer = '105588973' WHERE sensor_id = 2;
 
+
+
+-----------------------------------
+---------QUESTION 3----------------
+-----------------------------------
+
+----A
+SELECT sensor_id, Count(*) FROM REPORT
+GROUP BY sensor_id
+HAVING COUNT(*) IS NOT NULL
+ORDER BY Count(*) DESC
+FETCH FIRST 3 ROWS ONLY;
+
+----B
+SELECT sensor_id, Count(*) FROM REPORT
+GROUP BY sensor_id
+HAVING COUNT(*) IS NOT NULL
+ORDER BY Count(*) DESC
+FETCH FIRST 2 ROWS ONLY OFFSET 3;
+
+----C
 
 
