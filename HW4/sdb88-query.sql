@@ -223,6 +223,16 @@ FROM (SELECT maintainer, RANK() OVER (ORDER BY num_sensors_mv DESC) as rank
 WHERE workers.rank = 1) AS get_state on get_state.employing_state = c.state;
 
 --(e)
-
+SELECT DISTINCT name
+FROM
+(SELECT fs.sensor_id
+FROM FOREST_SENSOR fs
+WHERE fs.name = 'Big Woods')AS "big_woods" NATURAL JOIN FOREST_SENSOR fs2,
+     (SELECT COUNT(fs3.sensor_id)
+      FROM FOREST_SENSOR fs3
+      WHERE fs3.name='Big Woods') AS "count"
+WHERE name <> 'Big Woods'
+GROUP BY name,count.count
+HAVING COUNT(name) = count.count;
 
 
