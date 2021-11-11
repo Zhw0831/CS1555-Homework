@@ -167,7 +167,7 @@ GROUP BY maintainer;
 --(b)
 DROP MATERIALIZED VIEW IF EXISTS DUTIES_MV;
 CREATE MATERIALIZED VIEW DUTIES_MV AS
-SELECT COUNT(sensor_id) AS num_sensors_mv
+SELECT maintainer, COUNT(sensor_id) AS num_sensors_mv
 FROM SENSOR
 WHERE maintainer IS NOT NULL
 GROUP BY maintainer;
@@ -206,6 +206,23 @@ FROM (SELECT maintainer, RANK() OVER (ORDER BY num_sensors DESC) as rank
 WHERE workers.rank = 1) AS get_state on get_state.employing_state = c.state;
 
 --(c)
+SELECT DISTINCT fs.name
+FROM  FOREST_SENSOR fs
+WHERE fs.name NOT IN (
+    SELECT fs2.name
+    FROM REPORT r JOIN FOREST_SENSOR fs2 on r.sensor_id = fs2.sensor_id
+    WHERE r.report_time BETWEEN '2020-10-10 00:00:00' AND '2020-10-11 00:00:00');
+
+--(d)
+SELECT maintainer, name, employing_state, area
+FROM COVERAGE c JOIN (
+SELECT maintainer, name, employing_state
+FROM (SELECT maintainer, RANK() OVER (ORDER BY num_sensors_mv DESC) as rank
+      FROM DUTIES_MV) AS workers
+     JOIN WORKER w on workers.maintainer = w.ssn
+WHERE workers.rank = 1) AS get_state on get_state.employing_state = c.state;
+
+--(e)
 
 
 
