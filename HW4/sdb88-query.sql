@@ -38,6 +38,9 @@ COMMIT;
 --(b)
 -- the initial constraint for maintainer is immediate deferrable. I think it's fine to keep it as immediate.
 BEGIN;
+INSERT INTO WORKER VALUES ('xxxxxxxxx','x',0,'PA');
+COMMIT;
+BEGIN;
 UPDATE SENSOR
 SET maintainer = 'xxxxxxxxx'
 WHERE maintainer = (SELECT w.ssn
@@ -59,6 +62,9 @@ SET maintainer = (SELECT w.ssn
                   FROM WORKER w
                   WHERE w.name = 'John')
 WHERE maintainer = 'xxxxxxxxx';
+COMMIT;
+BEGIN;
+DELETE FROM WORKER WHERE ssn='xxxxxxxxx';
 COMMIT;
 --(c)
 BEGIN;
