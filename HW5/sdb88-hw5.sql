@@ -32,14 +32,14 @@ END;
 ---
 
 CREATE OR REPLACE FUNCTION computePercentage(forest_no varchar(10), area_covered real)
-RETURNS ratio FLOAT(3)
+RETURNS TRIGGER
 AS $$
 BEGIN
-    SELECT f.forest_no as num, area_covered/forest_no as ratio
-    FROM FOREST
-    WHERE F.forest_no = forest_no
-
-    ratio = ratio * 100;  ---TO MAKE IT A PERCENTAGE
+    SELECT c.forest_no as num, area_covered/forest_no as ratio
+    FROM COVERAGE c
+    WHERE c.forest_no = new.forest_no
+    c.percentage = ratio * 100;  ---TO MAKE IT A PERCENTAGE
+    RETURN new;
 END;
 
 ----
@@ -66,9 +66,35 @@ EXCECUTE PROCEDURE sensorCount();
 -- the function computePercentage described above. Note: area in the COVERAGE
 -- -- table is the area of a forest that spans the corresponding state state
 
--- DROP TRIGGER IF EXISTS percentage_tri on COVERAGE;
--- CREATE TRIGGER percentage_tri
--- AFTER UPDATE
--- ON SENSOR
--- FOR EACH ROW
--- EXCECUTE PROCEDURE sensorCount();
+DROP TRIGGER IF EXISTS percentage_tri on COVERAGE;
+CREATE TRIGGER percentage_tri
+AFTER UPDATE
+ON COVERAGE C
+FOR EACH ROW
+EXCECUTE PROCEDURE percentage(C.area, C.state);
+
+--  Define a trigger emergency tri, so that when a new report is inserted with the reported
+-- temperature higher than 100 degrees, the trigger inserts a corresponding tuple into the table
+-- EMERGENCY.
+
+CREATE OR REPLACE FUNCTION emergency()
+RETURNS TRIGGER AS $$
+BEGIN 
+    UPDATE TABLE EMERGENCY SET report_time = new.report_time;
+    WHERE sensor_id = new.sensor_id;
+    RETURN new;
+END;
+DROP TRIGGER IF EXISTS emergency_tri on REPORT;
+CREATE TRIGGER sensorCount_tri
+AFTER INSERT 
+ON REPORT R
+FOR EACH ROW BEGIN
+    IF(R.temperature > 100) 
+        THEN EXCECUTE PROCEDURE EMERGENCY();
+    END IF;
+
+-- You should create a trigger, called enforceMaintainer tri, that checks the maintainer of an added sensor whether they are employed within the same state as the sensor is
+-- located. If the sensor’s location is outside the employing state of the maintainer, then the
+-- sensor addition should fail.
+----i litterally have no idea
+
