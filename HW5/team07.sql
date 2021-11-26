@@ -4,7 +4,8 @@
 CREATE TABLE EMERGENCY (
     sensor_id integer,
     report_time timestamp NOT NULL,
-    CONSTRAINT EMERGENCY_FK FOREIGN KEY (sensor_id, report_time) REFERENCES REPORT(sensor_id, report_time)
+    CONSTRAINT EMERGENCY_PK PRIMARY KEY (sensor_id, report_time) NOT DEFERRABLE,
+    CONSTRAINT EMERGENCY_FK FOREIGN KEY (sensor_id, report_time) REFERENCES REPORT(sensor_id, report_time) DEFERRABLE INITIALLY IMMEDIATE
 );
 
 -- sensor_count attribute
