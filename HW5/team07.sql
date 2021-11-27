@@ -1,6 +1,7 @@
 ------------------------------- New Functionalities
 -------- Schema Evolution
 -- emergency table
+DROP TABLE IF EXISTS EMERGENCY CASCADE;
 CREATE TABLE EMERGENCY (
     sensor_id integer,
     report_time timestamp NOT NULL,
