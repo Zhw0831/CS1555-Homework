@@ -88,7 +88,7 @@ $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS percentage_tri ON COVERAGE;
 CREATE TRIGGER percentage_tri
-    AFTER UPDATE
+    BEFORE UPDATE
     ON COVERAGE
     FOR EACH ROW
 EXECUTE PROCEDURE updatePercentage();
