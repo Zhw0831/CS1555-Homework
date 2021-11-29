@@ -101,12 +101,13 @@ $$
 BEGIN
     INSERT INTO EMERGENCY
     VALUES (NEW.sensor_id, NEW.report_time);
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS emergency_tri ON REPORT;
 CREATE TRIGGER emergency_tri
-    AFTER INSERT
+    AFTER INSERT OR UPDATE
     ON REPORT
     FOR EACH ROW
     WHEN (NEW.temperature > 100)
@@ -138,6 +139,8 @@ BEGIN
         VALUES (sensor_id, x, y, last_charged, maintainer, last_read, energy);
     END IF;
 
+    RETURN NULL;
+
 END;
 $$ LANGUAGE plpgsql;
 
@@ -147,5 +150,29 @@ CREATE TRIGGER enforceMaintainer_tri
     ON SENSOR
     FOR EACH ROW
 EXECUTE PROCEDURE checkMaintainer();
+
+
+
+----------- other triggers / functions
+--- Task#2: add worker
+--- if the employing state is not in the state table yet, we should insert the state into the state table first
+CREATE OR REPLACE FUNCTION checkState(employing_state varchar(2)) RETURNS integer
+AS
+$$
+DECLARE
+    insert integer;
+BEGIN
+    IF checkState.employing_state NOT IN (SELECT abbreviation FROM STATE) THEN
+        INSERT INTO STATE
+        VALUES (checkState.employing_state, checkState.employing_state, 0, 1);
+        SELECT 1 INTO insert;
+    ELSE
+        SELECT 0 INTO insert;
+    END IF;
+
+    RETURN insert;
+END;
+$$ LANGUAGE plpgsql;
+
 
 
