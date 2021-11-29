@@ -29,6 +29,7 @@ public class AddForest {
             while (!validName) {
                 System.out.print("Please enter the forest name: ");
                 forestName = kbd.nextLine();
+                forestName = forestName.toUpperCase();
 
                 String compareName = "SELECT name FROM FOREST WHERE name = '"+forestName+"'";
                 ResultSet res1 = st.executeQuery(compareName);
