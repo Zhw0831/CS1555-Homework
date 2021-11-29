@@ -41,12 +41,12 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- function
-CREATE OR REPLACE FUNCTION computePercentage (forest_no varchar(10), area_covered real) RETURNS real AS
+CREATE OR REPLACE FUNCTION computePercentage (forest_no integer, area_covered real) RETURNS real AS
     $$
     DECLARE
         ratio real;
     BEGIN
-        SELECT (area_covered/area)*100 INTO ratio
+        SELECT area_covered/area INTO ratio
         FROM FOREST F
         WHERE F.forest_no = computePercentage.forest_no;
         RETURN ratio;
@@ -81,7 +81,7 @@ CREATE OR REPLACE FUNCTION updatePercentage()
 RETURNS TRIGGER AS
 $$
 BEGIN
-    NEW.percentage := computePercentage(forest_no, area);
+    NEW.percentage := computePercentage(NEW.forest_no, NEW.area);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
