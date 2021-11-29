@@ -174,5 +174,24 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+--- Task # 7
+--- add a function: pick the name of the top k workers by ascending order of date and sensor energy level < 2
+-- CREATE OR REPLACE FUNCTION topK() RETURNS SETOF WORKER
+-- AS
+-- $$
+-- DECLARE
+--     name_list varchar(30);
+-- BEGIN
+--     SELECT RANK() OVER(ORDER BY sensor_num_maintain DESC), name INTO name_list
+--     FROM
+--          (SELECT w.name, COUNT(sensor_id) AS sensor_num
+--           FROM WORKER w JOIN SENSOR s on w.ssn = s.maintainer
+--           WHERE s.energy <= 2
+--           GROUP BY w.name) sensor_num_maintain;
+--     RETURN name_list;
+-- END;
+-- $$ LANGUAGE plpgsql;
+
+
 
 
