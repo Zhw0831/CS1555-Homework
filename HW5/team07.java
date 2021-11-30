@@ -88,6 +88,18 @@ public class team07 {
         {
             case 1:
                 showTables.forest(conn);
+            case 2:
+                showTables.worker(conn);
+            case 3:
+                showTables.sensor(conn);
+            case 4:
+                showTables.state(conn);
+            case 5:
+                showTables.coverage(conn);
+            case 6:
+                showTables.report(conn);
+            case 7:
+                showTables.emergency(conn);
         }
 
     }

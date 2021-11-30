@@ -23,24 +23,41 @@ end;
 $$ LANGUAGE plpgsql;
 
 
+---Called by add Forest to check if this state abbreviation exists in the State table.
+--- if the employing state is not in the state table yet, we should insert the state into the state table first
+CREATE OR REPLACE FUNCTION checkState(employing_state varchar(2)) RETURNS trigger
+AS
+$$
+DECLARE
+    insert integer;
+BEGIN
+    IF checkState.employing_state NOT IN (SELECT abbreviation FROM STATE) THEN
+        INSERT INTO STATE
+        VALUES (checkState.employing_state, checkState.employing_state, 0, 1);
+        SELECT 1 INTO insert;
+    ELSE
+        SELECT 0 INTO insert;
+    END IF;
 
-SELECT sensor_id, count(report_time)
-FROM REPORT
-GROUP BY sensor_id
-HAVING count(report_time) IS NOT NULL
-ORDER BY count(report_time) DESC
-FETCH FIRST 3 ROWS ONLY;
+    RETURN insert;
+END;
+$$ LANGUAGE plpgsql;
 
-----THIS IS GETTING THE NAMES OF ALL THE PEOPLE WHO HAVE SENSORS BELOW 2
-SELECT W.name, S.sensor_id
-FROM WORKER W JOIN SENSOR S ON W.ssn = S.maintainer
-WHERE S.energy <= 2;
+--- Task # 7
+--- add a function: pick the name of the top k workers by ascending order of date and sensor energy level < 2
+-- CREATE OR REPLACE FUNCTION topK() RETURNS SETOF WORKER
+-- AS
+-- $$
+-- DECLARE
+--     name_list varchar(30);
+-- BEGIN
+--     SELECT RANK() OVER(ORDER BY sensor_num_maintain DESC), name INTO name_list
+--     FROM
+--          (SELECT w.name, COUNT(sensor_id) AS sensor_num
+--           FROM WORKER w JOIN SENSOR s on w.ssn = s.maintainer
+--           WHERE s.energy <= 2
+--           GROUP BY w.name) sensor_num_maintain;
+--     RETURN name_list;
+-- END;
+-- $$ LANGUAGE plpgsql;
 
-SELECT W.name, count(S.sensor_id)
-FROM WORKER W JOIN SENSOR S ON W.ssn = S.maintainer
-GROUP BY W.name
-FETCH FIRST 3 ROWS ONLY;
-----------
-
-SELECT A.name, count(sensor_id) FROM (SELECT name, sensor_id FROM WORKER JOIN sensor ON worker.ssn = sensor.maintainer WHERE energy <= 2) AS A
-GROUP BY A.name FETCH FIRST 3 ROWS ONLY;
