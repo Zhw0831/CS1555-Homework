@@ -1,3 +1,4 @@
+
 package HW5;
 
 import java.sql.*;
@@ -503,6 +504,3 @@ public class queries {
         }
     }
 }
-
-
-

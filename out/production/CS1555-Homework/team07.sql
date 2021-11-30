@@ -1,13 +1,12 @@
 ------------------------------- New Functionalities
 -------- Schema Evolution
 -- emergency table
-DROP TABLE IF EXISTS  EMERGENCY;
-CREATE TABLE EMERGENCY
-(
-    sensor_id   integer,
+DROP TABLE IF EXISTS EMERGENCY CASCADE;
+CREATE TABLE EMERGENCY (
+    sensor_id integer,
     report_time timestamp NOT NULL,
-    CONSTRAINT EMERGENCY_PK PRIMARY KEY (sensor_id, report_time),
-    CONSTRAINT EMERGENCY_FK FOREIGN KEY (sensor_id, report_time) REFERENCES REPORT (sensor_id, report_time)
+    CONSTRAINT EMERGENCY_PK PRIMARY KEY (sensor_id, report_time) NOT DEFERRABLE,
+    CONSTRAINT EMERGENCY_FK FOREIGN KEY (sensor_id, report_time) REFERENCES REPORT(sensor_id, report_time) DEFERRABLE INITIALLY IMMEDIATE
 );
 
 -- sensor_count attribute
@@ -24,7 +23,7 @@ forest_cursor CURSOR FOR
         FROM FOREST
         WHERE $1 BETWEEN mbr_xmin AND mbr_xmax AND
               $2 BETWEEN mbr_ymin AND mbr_ymax;
-forest_rec FOREST%ROWTYPE; --- look at reciatiation
+forest_rec FOREST%ROWTYPE;
 
 BEGIN
     OPEN forest_cursor;
@@ -108,7 +107,7 @@ $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS emergency_tri ON REPORT;
 CREATE TRIGGER emergency_tri
-    BEFORE INSERT OR UPDATE
+    AFTER INSERT OR UPDATE
     ON REPORT
     FOR EACH ROW
     WHEN (NEW.temperature > 100)
@@ -152,50 +151,47 @@ CREATE TRIGGER enforceMaintainer_tri
     FOR EACH ROW
 EXECUTE PROCEDURE checkMaintainer();
 
--- <<<<<<< HEAD
--- =======
---
---
--- ----------- other triggers / functions
--- --- Task#2: add worker
--- --- if the employing state is not in the state table yet, we should insert the state into the state table first
--- CREATE OR REPLACE FUNCTION checkState(employing_state varchar(2)) RETURNS integer
+
+
+----------- other triggers / functions
+--- Task#2: add worker
+--- if the employing state is not in the state table yet, we should insert the state into the state table first
+CREATE OR REPLACE FUNCTION checkState(employing_state varchar(2)) RETURNS integer
+AS
+$$
+DECLARE
+    insert integer;
+BEGIN
+    IF checkState.employing_state NOT IN (SELECT abbreviation FROM STATE) THEN
+        INSERT INTO STATE
+        VALUES (checkState.employing_state, checkState.employing_state, 0, 1);
+        SELECT 1 INTO insert;
+    ELSE
+        SELECT 0 INTO insert;
+    END IF;
+
+    RETURN insert;
+END;
+$$ LANGUAGE plpgsql;
+
+--- Task # 7
+--- add a function: pick the name of the top k workers by ascending order of date and sensor energy level < 2
+-- CREATE OR REPLACE FUNCTION topK() RETURNS SETOF WORKER
 -- AS
 -- $$
 -- DECLARE
---     insert integer;
+--     name_list varchar(30);
 -- BEGIN
---     IF checkState.employing_state NOT IN (SELECT abbreviation FROM STATE) THEN
---         INSERT INTO STATE
---         VALUES (checkState.employing_state, checkState.employing_state, 0, 1);
---         SELECT 1 INTO insert;
---     ELSE
---         SELECT 0 INTO insert;
---     END IF;
---
---     RETURN insert;
+--     SELECT RANK() OVER(ORDER BY sensor_num_maintain DESC), name INTO name_list
+--     FROM
+--          (SELECT w.name, COUNT(sensor_id) AS sensor_num
+--           FROM WORKER w JOIN SENSOR s on w.ssn = s.maintainer
+--           WHERE s.energy <= 2
+--           GROUP BY w.name) sensor_num_maintain;
+--     RETURN name_list;
 -- END;
 -- $$ LANGUAGE plpgsql;
---
--- --- Task # 7
--- --- add a function: pick the name of the top k workers by ascending order of date and sensor energy level < 2
--- -- CREATE OR REPLACE FUNCTION topK() RETURNS SETOF WORKER
--- -- AS
--- -- $$
--- -- DECLARE
--- --     name_list varchar(30);
--- -- BEGIN
--- --     SELECT RANK() OVER(ORDER BY sensor_num_maintain DESC), name INTO name_list
--- --     FROM
--- --          (SELECT w.name, COUNT(sensor_id) AS sensor_num
--- --           FROM WORKER w JOIN SENSOR s on w.ssn = s.maintainer
--- --           WHERE s.energy <= 2
--- --           GROUP BY w.name) sensor_num_maintain;
--- --     RETURN name_list;
--- -- END;
--- -- $$ LANGUAGE plpgsql;
---
---
---
---
--- >>>>>>> 951676b6861f2c31196faac299671d08188cb32e
+
+
+
+

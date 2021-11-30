@@ -2,11 +2,12 @@
 -------- Schema Evolution
 -- emergency table
 DROP TABLE IF EXISTS  EMERGENCY;
-CREATE TABLE EMERGENCY (
-    sensor_id integer,
+CREATE TABLE EMERGENCY
+(
+    sensor_id   integer,
     report_time timestamp NOT NULL,
     CONSTRAINT EMERGENCY_PK PRIMARY KEY (sensor_id, report_time),
-    CONSTRAINT EMERGENCY_FK FOREIGN KEY (sensor_id, report_time) REFERENCES REPORT(sensor_id, report_time)
+    CONSTRAINT EMERGENCY_FK FOREIGN KEY (sensor_id, report_time) REFERENCES REPORT (sensor_id, report_time)
 );
 
 -- sensor_count attribute
@@ -41,12 +42,12 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- function
-CREATE OR REPLACE FUNCTION computePercentage (forest_no varchar(10), area_covered real) RETURNS real AS
+CREATE OR REPLACE FUNCTION computePercentage (forest_no integer, area_covered real) RETURNS real AS
     $$
     DECLARE
         ratio real;
     BEGIN
-        SELECT (area_covered/area)*100 INTO ratio
+        SELECT area_covered/area INTO ratio
         FROM FOREST F
         WHERE F.forest_no = computePercentage.forest_no;
         RETURN ratio;
@@ -81,14 +82,14 @@ CREATE OR REPLACE FUNCTION updatePercentage()
 RETURNS TRIGGER AS
 $$
 BEGIN
-    NEW.percentage := computePercentage(forest_no, area);
+    NEW.percentage := computePercentage(NEW.forest_no, NEW.area);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS percentage_tri ON COVERAGE;
 CREATE TRIGGER percentage_tri
-    AFTER UPDATE
+    BEFORE UPDATE
     ON COVERAGE
     FOR EACH ROW
 EXECUTE PROCEDURE updatePercentage();
@@ -101,12 +102,13 @@ $$
 BEGIN
     INSERT INTO EMERGENCY
     VALUES (NEW.sensor_id, NEW.report_time);
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS emergency_tri ON REPORT;
 CREATE TRIGGER emergency_tri
-    AFTER INSERT
+    BEFORE INSERT OR UPDATE
     ON REPORT
     FOR EACH ROW
     WHEN (NEW.temperature > 100)
@@ -138,6 +140,8 @@ BEGIN
         VALUES (sensor_id, x, y, last_charged, maintainer, last_read, energy);
     END IF;
 
+    RETURN NULL;
+
 END;
 $$ LANGUAGE plpgsql;
 
@@ -148,3 +152,50 @@ CREATE TRIGGER enforceMaintainer_tri
     FOR EACH ROW
 EXECUTE PROCEDURE checkMaintainer();
 
+-- <<<<<<< HEAD
+-- =======
+--
+--
+-- ----------- other triggers / functions
+-- --- Task#2: add worker
+-- --- if the employing state is not in the state table yet, we should insert the state into the state table first
+-- CREATE OR REPLACE FUNCTION checkState(employing_state varchar(2)) RETURNS integer
+-- AS
+-- $$
+-- DECLARE
+--     insert integer;
+-- BEGIN
+--     IF checkState.employing_state NOT IN (SELECT abbreviation FROM STATE) THEN
+--         INSERT INTO STATE
+--         VALUES (checkState.employing_state, checkState.employing_state, 0, 1);
+--         SELECT 1 INTO insert;
+--     ELSE
+--         SELECT 0 INTO insert;
+--     END IF;
+--
+--     RETURN insert;
+-- END;
+-- $$ LANGUAGE plpgsql;
+--
+-- --- Task # 7
+-- --- add a function: pick the name of the top k workers by ascending order of date and sensor energy level < 2
+-- -- CREATE OR REPLACE FUNCTION topK() RETURNS SETOF WORKER
+-- -- AS
+-- -- $$
+-- -- DECLARE
+-- --     name_list varchar(30);
+-- -- BEGIN
+-- --     SELECT RANK() OVER(ORDER BY sensor_num_maintain DESC), name INTO name_list
+-- --     FROM
+-- --          (SELECT w.name, COUNT(sensor_id) AS sensor_num
+-- --           FROM WORKER w JOIN SENSOR s on w.ssn = s.maintainer
+-- --           WHERE s.energy <= 2
+-- --           GROUP BY w.name) sensor_num_maintain;
+-- --     RETURN name_list;
+-- -- END;
+-- -- $$ LANGUAGE plpgsql;
+--
+--
+--
+--
+-- >>>>>>> 951676b6861f2c31196faac299671d08188cb32e
