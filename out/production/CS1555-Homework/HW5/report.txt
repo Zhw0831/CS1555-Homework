@@ -1,0 +1,8 @@
+Assumptions:
+
+Assuming that when entering names of forest and worker, users will enter them just as they are stored in
+the tables: John being the correct version and not (john, or JOHN or whatever)
+
+For update forest covered area, we assume that the user is entering the area of a forest in a state.
+
+When the date is entered, it exists. It cant be 00 or beginning of time.

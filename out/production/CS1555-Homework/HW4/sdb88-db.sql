@@ -2,7 +2,6 @@
 ---     Zhen Wu (zhw87)
 ---     Sushruti Bansod (sdb88)
 
-COMMIT;
 
 ---DROP DATABASE ELEMENTS TO MAKE SURE THE SCHEMA IS CLEAR (E.G., TABLES, DOMAINS, ETC.)
 DROP TABLE IF EXISTS FOREST CASCADE;
@@ -18,7 +17,7 @@ DROP DOMAIN IF EXISTS energy_dom;
 CREATE DOMAIN energy_dom AS integer CHECK (value >= 0 AND value <= 100);
 
 CREATE TABLE FOREST (
-    forest_no       SERIAL,
+    forest_no       varchar(10),
     name            varchar(30) NOT NULL,
     area            real NOT NULL,
     acid_level      real NOT NULL,
@@ -33,7 +32,6 @@ CREATE TABLE FOREST (
 );
 
 
-
 CREATE TABLE STATE (
     name            varchar(30) NOT NULL,
     abbreviation    varchar(2),
@@ -45,7 +43,7 @@ CREATE TABLE STATE (
 
 
 CREATE TABLE COVERAGE (
-    forest_no       SERIAL,
+    forest_no       varchar(10),
     state           varchar(2),
     percentage      real NOT NULL,
     area            real NOT NULL,
@@ -64,7 +62,7 @@ CREATE TABLE ROAD (
 
 
 CREATE TABLE INTERSECTION (
-    forest_no SERIAL,
+    forest_no varchar(10),
     road_no   varchar(10),
     CONSTRAINT INTERSECTION_PK PRIMARY KEY (forest_no, road_no),
     CONSTRAINT INTERSECTION_FK1 FOREIGN KEY (forest_no) REFERENCES FOREST(forest_no),
@@ -85,7 +83,7 @@ CREATE TABLE WORKER (
 
 CREATE TABLE SENSOR
   (
-    sensor_id SERIAL,
+    sensor_id integer,
     x real NOT NULL,
     y real NOT NULL,
     last_charged timestamp NOT NULL,

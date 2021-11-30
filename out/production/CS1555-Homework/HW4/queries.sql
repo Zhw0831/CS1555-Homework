@@ -38,9 +38,6 @@ COMMIT;
 --(b)
 -- the initial constraint for maintainer is immediate deferrable. I think it's fine to keep it as immediate.
 BEGIN;
-INSERT INTO WORKER VALUES ('xxxxxxxxx','x',0,'PA');
-COMMIT;
-BEGIN;
 UPDATE SENSOR
 SET maintainer = 'xxxxxxxxx'
 WHERE maintainer = (SELECT w.ssn
@@ -62,9 +59,6 @@ SET maintainer = (SELECT w.ssn
                   FROM WORKER w
                   WHERE w.name = 'John')
 WHERE maintainer = 'xxxxxxxxx';
-COMMIT;
-BEGIN;
-DELETE FROM WORKER WHERE ssn='xxxxxxxxx';
 COMMIT;
 --(c)
 BEGIN;
@@ -151,14 +145,6 @@ HAVING COUNT(forest_no) = bigwoods_count.count) AS "final_forest_no";
 
 
 
---(h)
---SELECT
---FROM REPORT LEFT OUTER JOIN
-        --(SELECT i1.road_no
-        --FROM FOREST f1 JOIN INTERSECTION i1 on f1.forest_no = i1.forest_no
-        --WHERE f1.name = 'Big Woods') AS "big_woods" on compare.road_no = big_woods.road_no;
---WHERE
-
 
 
 -------- Question 4
@@ -195,50 +181,38 @@ GROUP BY forest_no;
 
 -------- Question 5
 REFRESH MATERIALIZED VIEW DUTIES_MV;
-
 --(a)
+
 SELECT forest_no
-FROM ( SELECT forest_no, RANK() over (ORDER BY count DESC) as rank
+FROM (SELECT forest_no, RANK() over (ORDER BY count DESC) as rank
        FROM FOREST_ROAD) AS rank_view
-WHERE rank =2;
+WHERE rank = 2;
 
 --(b)
 SELECT maintainer, name, employing_state, area
-FROM COVERAGE c JOIN (
-SELECT maintainer, name, employing_state
-FROM (SELECT maintainer, RANK() OVER (ORDER BY num_sensors DESC) as rank
-      FROM DUTIES) AS workers
-     JOIN WORKER w on workers.maintainer = w.ssn
-WHERE workers.rank = 1) AS get_state on get_state.employing_state = c.state;
+FROM COVERAGE C JOIN (SELECT maintainer, name, employing_state
+                        FROM (SELECT maintainer, RANK() OVER (ORDER BY num_sensors DESC) as rank
+                                FROM DUTIES) AS workers
+                        JOIN WORKER w on workers.maintainer = w.ssn
+                        WHERE workers.rank = 1) AS get_state on get_state.employing_state = c.state;
 
 --(c)
-SELECT DISTINCT fs.name
-FROM  FOREST_SENSOR fs
-WHERE fs.name NOT IN (
-    SELECT fs2.name
-    FROM REPORT r JOIN FOREST_SENSOR fs2 on r.sensor_id = fs2.sensor_id
-    WHERE r.report_time BETWEEN '2020-10-10 00:00:00' AND '2020-10-11 00:00:00');
 
+SELECT F.name
+FROM FOREST_SENSOR AS F
+WHERE F.NAME NOT IN (SELECT F2.name
+                        FROM REPORT R JOIN FOREST_SENSOR F2 on R.sensor_id = F2.sensor_id
+                        WHERE R.report_time BETWEEN '2020-10-10 00:00:00' AND '2020-10-11 00:00:00');
 --(d)
+
 SELECT maintainer, name, employing_state, area
-FROM COVERAGE c JOIN (
-SELECT maintainer, name, employing_state
-FROM (SELECT maintainer, RANK() OVER (ORDER BY num_sensors_mv DESC) as rank
-      FROM DUTIES_MV) AS workers
-     JOIN WORKER w on workers.maintainer = w.ssn
-WHERE workers.rank = 1) AS get_state on get_state.employing_state = c.state;
+FROM COVERAGE C JOIN (SELECT maintainer, name, employing_state
+                        FROM (SELECT maintainer, RANK() OVER (ORDER BY num_sensors_mv DESC) as rank
+                                FROM DUTIES_MV) AS workers
+                        JOIN WORKER w on workers.maintainer = w.ssn
+                        WHERE workers.rank = 1) AS get_state on get_state.employing_state = c.state;
 
 --(e)
-SELECT DISTINCT name
-FROM
-(SELECT fs.sensor_id
-FROM FOREST_SENSOR fs
-WHERE fs.name = 'Big Woods')AS "big_woods" NATURAL JOIN FOREST_SENSOR fs2,
-     (SELECT COUNT(fs3.sensor_id)
-      FROM FOREST_SENSOR fs3
-      WHERE fs3.name='Big Woods') AS "count"
-WHERE name <> 'Big Woods'
-GROUP BY name,count.count
-HAVING COUNT(name) = count.count;
+---i really dont understand the question
 
 
