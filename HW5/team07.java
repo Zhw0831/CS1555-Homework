@@ -45,7 +45,14 @@ public class team07 {
                 case 8:
                     team07.mostActive(conn);
                     continue;
+                case 9:
+                    team07.addState(conn);
+                    continue;
+                case 10:
+                    team07.showRegistry(conn);
+                    continue;
             }
+            System.out.println("-----------------------------------------");
         }
     }
 
@@ -60,11 +67,30 @@ public class team07 {
         System.out.println("6: Update Forest Area Covered");
         System.out.println("7: Find Top K Busy Workers");
         System.out.println("8: Find Most Active Sensors");
-
-
+        System.out.println("9: Add State");
+        System.out.println("10: View Registry");
         return inScan.nextInt();
+
     }
 
+    private static void showRegistry(Connection conn) throws SQLException
+    {
+        System.out.println("Select the regsitry you want to view:");
+        System.out.println("1: Forest");
+        System.out.println("2: Worker");
+        System.out.println("3: Sensor");
+        System.out.println("4: State ");
+        System.out.println("5: Coverage");
+        System.out.println("6: Report");
+        System.out.println("7: Emergency");
+
+        switch (inScan.nextInt())
+        {
+            case 1:
+                showTables.forest(conn);
+        }
+
+    }
     private static void insertForest(Connection conn) throws SQLException {
         Statement st = conn.createStatement();
         String forestName = "";
@@ -74,45 +100,44 @@ public class team07 {
         try {
             ///getting the input from the user and checking integrity statements
             while (!validName) {
-                System.out.print("Please enter the forest name: ");
+                System.out.print("Enter the name of the forest: ");
                 forestName = inScan.nextLine();
-
-                String compareName = "SELECT name FROM FOREST WHERE name = '" + forestName + "'";
+                String compareName = String.format("SELECT name FROM FOREST WHERE name = %s", forestName);
                 ResultSet res1 = st.executeQuery(compareName);
 
                 if (!res1.next())
                     validName = true;
                 else
-                    System.out.print("The forest name already exists. ");
+                    System.out.println("This forest name already exists. Please try again.");
             }
 
-            System.out.print("Please enter the forest area: ");
+            System.out.print("Enter the area of the forest: ");
             area = inScan.nextDouble();
 
             boolean validAcid = false;
             while (!validAcid) {
-                System.out.print("Please enter the forest's acid level: ");
+                System.out.print("Enter the acid level of the forest");
                 acidLevel = inScan.nextDouble();
 
                 if (acidLevel >= 0 && acidLevel <= 1)
                     validAcid = true;
                 else
-                    System.out.print("Acid level must between 0 and 1. ");
+                    System.out.println("The acid level you entered is invalid. It must be between 0 and 1 inclusive. ");
             }
 
             boolean validBound = false;
 
             while (!validBound) {
-                System.out.print("Please enter the min x boundary: ");
+                System.out.print("Enter the minimum x boundary: ");
                 xmin = inScan.nextDouble();
 
-                System.out.print("Please enter the max x boundary: ");
+                System.out.print("Enter the maximum x boundary: ");
                 xmax = inScan.nextDouble();
 
-                System.out.print("Please enter the min y boundary: ");
+                System.out.print("Enter the minimum y boundary: ");
                 ymin = inScan.nextDouble();
 
-                System.out.print("Please enter the max y boundary: ");
+                System.out.print("Enter the maximum y boundary: ");
                 ymax = inScan.nextDouble();
 
                 String compareBound = "SELECT mbr_xmin, mbr_xmax, mbr_ymin, mbr_ymax FROM FOREST WHERE mbr_xmin = '" +
@@ -122,13 +147,19 @@ public class team07 {
                 if (!res2.next())
                     validBound = true;
                 else
-                    System.out.print("The boundaries already exist. ");
+                    System.out.println("These x - y boundaries already exist. Please try again.");
             }
 
             conn.setAutoCommit(false);
-            String insert = "INSERT INTO FOREST (name,area,acid_level,mbr_xmin,mbr_xmax,mbr_ymin,mbr_ymax) " +
-                    "VALUES ('" + forestName + "'," + area + ", " + acidLevel + "," + xmin + "," + xmax + "," + ymin + "," + ymax + ");";
-            PreparedStatement insertForest = conn.prepareStatement(insert);
+            PreparedStatement insertForest = conn.prepareStatement("INSERT INTO FOREST (forest_no, name, area, acid_level, mbr_xmin, mbr_xmax, mbr_ymin, mbr_ymax) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?);");
+            insertForest.setString(1, forestName);
+            insertForest.setDouble(2, area);
+            insertForest.setDouble(3, acidLevel);
+            insertForest.setDouble(4, xmin);
+            insertForest.setDouble(5, xmax);
+            insertForest.setDouble(6, ymin);
+            insertForest.setDouble(7, ymax);
+
             insertForest.executeUpdate();
             conn.commit();
 
@@ -137,7 +168,7 @@ public class team07 {
             ResultSet res2 = query2.executeQuery();
             while (res2.next()) {
                 int confirmNum = res2.getInt("forest_no");
-                System.out.printf("\nYour insertion is successful with forest number %d\n", confirmNum);
+                System.out.println(String.format("Forest %s successfully inserted with the forest number %d!", forestName, confirmNum));
             }
 
         } catch (SQLException e1) {
@@ -194,6 +225,13 @@ public class team07 {
             rank = inScan.nextInt();
 
             inScan.nextLine();
+
+            String query2 = "SELECT abbreviation FROM STATE";
+            ResultSet res2 = st.executeQuery(query2);
+            ArrayList<String> states = new ArrayList<String>();
+            while (res2.next()) {
+                states.add(res2.getString(1));
+            }
             boolean validState = false;
             while (!validState) {
                 System.out.print("Please enter the worker's employing state: ");
@@ -203,6 +241,11 @@ public class team07 {
                     validState = true;
                 } else {
                     System.out.println("State abbreviation invalid. Please enter the state abbreviation (PA, OH).");
+                }
+
+                if (!states.contains(employingState)) {
+                    System.out.println("This state does not exist. Please add it.");
+                    addState(conn);
                 }
             }
 
@@ -215,11 +258,11 @@ public class team07 {
             insertWorker.executeUpdate();
             conn.commit();
 
-            PreparedStatement query2 = conn.prepareStatement("SELECT name FROM WORKER WHERE ssn = ?");
-            query2.setString(1, ssn);
-            ResultSet res2 = query2.executeQuery();
-            while (res2.next()) {
-                String confirmName = res2.getString("name");
+            PreparedStatement query3 = conn.prepareStatement("SELECT name FROM WORKER WHERE ssn = ?");
+            query3.setString(1, ssn);
+            ResultSet res3 = query3.executeQuery();
+            while (res3.next()) {
+                String confirmName = res3.getString("name");
                 System.out.printf("\nYour insertion is successful with worker's name %s\n", confirmName);
             }
         } catch (SQLException e1) {
@@ -234,6 +277,8 @@ public class team07 {
             System.out.println("Then input is invalid.");
             System.exit(0);
         }
+
+        System.out.println("--------------------------------------");
     }
 
     private static void insertSensor(Connection conn) throws SQLException {
@@ -327,6 +372,8 @@ public class team07 {
             System.out.println("Then input is invalid.");
             System.exit(0);
         }
+
+        System.out.print("--------------------------------------");
     }
 
     private static void switchWorkers(Connection conn) throws SQLException {
@@ -415,6 +462,8 @@ public class team07 {
             System.out.println("Then input is invalid.");
             System.exit(0);
         }
+
+        System.out.print("--------------------------------------");
     }
 
     private static void updateSensorStatus(Connection conn) throws SQLException {
@@ -424,22 +473,21 @@ public class team07 {
 
         int energy = 0, sensor_id = 0;
 
-        try{
+        try {
             boolean validCord = false;
-            while(!validCord){
+            while (!validCord) {
                 System.out.print("Please enter the x coordinate of the sensor: ");
                 x = inScan.nextDouble();
                 System.out.print("Please enter the y coordinate of the sensor: ");
                 y = inScan.nextDouble();
 
-                String query1 = "SELECT x,y,sensor_id FROM SENSOR WHERE x = '"+x+"' AND y = '"+y+"'";
+                String query1 = "SELECT x,y,sensor_id FROM SENSOR WHERE x = '" + x + "' AND y = '" + y + "'";
                 ResultSet res1 = st.executeQuery(query1);
 
-                if(res1.next()) {
+                if (res1.next()) {
                     validCord = true;
                     sensor_id = res1.getInt("sensor_id");
-                }
-                else
+                } else
                     System.out.print("The sensor is not in the records. ");
             }
 
@@ -452,13 +500,13 @@ public class team07 {
 
             System.out.println("Enter the time the sensor was last charged:");
             System.out.println("Enter the month");
-            String lc_month= inScan.next();
+            String lc_month = inScan.next();
             System.out.println("Enter the day");
-            String lc_day= inScan.next();
+            String lc_day = inScan.next();
             System.out.println("Enter the year");
-            String lc_year= inScan.next();
+            String lc_year = inScan.next();
             System.out.println("Enter the time (hh24:mi)");
-            String lc_time= inScan.next();
+            String lc_time = inScan.next();
 
             String last_charged = lc_month + "/" + lc_day + "/" + lc_year + " " + lc_time;
 
@@ -492,11 +540,10 @@ public class team07 {
             PreparedStatement query2 = conn.prepareStatement("SELECT sensor_id FROM EMERGENCY WHERE sensor_id = ?");
             query2.setInt(1, sensor_id);
             ResultSet res2 = query2.executeQuery();
-            if(res2.next()) {
+            if (res2.next()) {
                 System.out.println("An emergency was reported after the sensor status was updated.");
             }
-        }
-        catch (SQLException e1) {
+        } catch (SQLException e1) {
             try {
                 System.out.print(e1.toString());
                 System.out.println("The current insertion failed.");
@@ -504,15 +551,15 @@ public class team07 {
             } catch (SQLException e2) {
                 System.out.println(e2.toString());
             }
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             System.out.println("Then input is invalid.");
             System.exit(0);
         }
+
+        System.out.print("--------------------------------------");
     }
 
-    private static void updateForestArea(Connection conn) throws SQLException
-    {
+    private static void updateForestArea(Connection conn) throws SQLException {
         Statement st = conn.createStatement();
 
         inScan.nextLine();
@@ -520,21 +567,20 @@ public class team07 {
         double newArea = 0;
         int forestNum = 0;
 
-        try{
+        try {
             boolean validName = false;
             while (!validName) {
                 System.out.print("Please enter the forest name: ");
                 forestName = inScan.nextLine();
                 //forestName = forestName.toUpperCase();
 
-                String compareName = "SELECT name, forest_no FROM FOREST WHERE name = '"+forestName+"'";
+                String compareName = "SELECT name, forest_no FROM FOREST WHERE name = '" + forestName + "'";
                 ResultSet res1 = st.executeQuery(compareName);
 
                 if (res1.next()) {
                     validName = true;
                     forestNum = res1.getInt("forest_no");
-                }
-                else
+                } else
                     System.out.print("The forest name doesn't exist. ");
             }
 
@@ -568,8 +614,7 @@ public class team07 {
             conn.commit();
 
             System.out.println("Your update is successful.");
-        }
-        catch (SQLException e1) {
+        } catch (SQLException e1) {
             try {
                 System.out.print(e1.toString());
                 System.out.println("The current update failed.");
@@ -577,30 +622,29 @@ public class team07 {
             } catch (SQLException e2) {
                 System.out.println(e2.toString());
             }
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             System.out.println("Then input is invalid.");
             System.exit(0);
         }
+
+        System.out.print("--------------------------------------");
     }
 
-    private static void findTopK(Connection conn) throws SQLException
-    {
+    private static void findTopK(Connection conn) throws SQLException {
         inScan.nextLine();
 
         String q = "SELECT count(*) FROM WORKER";
         Statement st = conn.createStatement();
         ResultSet res1 = st.executeQuery(q);
         int numWorkers = 0;
-        while(res1.next())
-        {
+        while (res1.next()) {
             numWorkers = res1.getInt(1);
         }
 
 
         Boolean validateK = false;
         int k = 0;
-        while(!validateK) {
+        while (!validateK) {
             System.out.println("Enter a top k value: ");
             k = inScan.nextInt();
             if (k > numWorkers) {
@@ -613,15 +657,15 @@ public class team07 {
                 "GROUP BY A.name ORDER BY count(sensor_id) DESC FETCH FIRST %d ROWS ONLY;", k);
         res1 = st.executeQuery(query);
         String name;
-        while(res1.next())
-        {
+        while (res1.next()) {
             name = res1.getString(1);
             System.out.println(name);
         }
+
+        System.out.print("--------------------------------------");
     }
 
-    private static void mostActive(Connection conn) throws SQLException
-    {
+    private static void mostActive(Connection conn) throws SQLException {
         Statement st = conn.createStatement();
 
         String query = "SELECT sensor_id, RANK() OVER(ORDER BY COUNT(report_time)) AS rank FROM REPORT GROUP BY sensor_id";
@@ -631,12 +675,77 @@ public class team07 {
 
         int id, rank;
         System.out.format("%15s%15s%n", "sensor id", "active rank");
-        while(res.next()){
+        while (res.next()) {
             id = res.getInt("sensor_id");
             rank = res.getInt(2);
             System.out.format("%15s%15s%n", id, rank);
         }
+
+        System.out.print("--------------------------------------");
+    }
+
+    private static void addState(Connection conn) throws SQLException
+    {
+        String state = "", abbreviation = "";
+        double area = 0;
+        int population = 0;
+
+
+        try {
+            System.out.print("Enter the name of the state: ");
+            state = inScan.next();
+
+            boolean validState = false;
+            while (!validState) {
+                System.out.print("Enter the two letter abbreviation of the state: ");
+                abbreviation = inScan.next();
+                if (abbreviation.length() == 2) {
+                    validState = true;
+                } else {
+                    System.out.println("State abbreviation invalid. Please enter the state abbreviation (PA, OH).");
+                }
+
+            }
+
+            System.out.print("Enter the area of the state: ");
+            area = inScan.nextDouble();
+            System.out.print("Enter the population of the state: ");
+            population = inScan.nextInt();
+
+            conn.setAutoCommit(false);
+            PreparedStatement query2 = conn.prepareStatement("INSERT INTO STATE (name, abbreviation, area, population) VALUES (?, ?, ?, ?);");
+            query2.setString(1, state);
+            query2.setString(2, abbreviation);
+            query2.setDouble(3, area);
+            query2.setInt(4, population);
+
+            query2.executeUpdate();
+            conn.commit();
+
+            query2 = conn.prepareStatement("SELECT name FROM STATE WHERE abbreviation = ?");
+            query2.setString(1, abbreviation);
+            ResultSet res2 = query2.executeQuery();
+            while (res2.next()) {
+                String confirmName = res2.getString("name");
+                System.out.println(String.format("%s successfully inserted into state with the abbreviation %s", state, abbreviation));
+            }
+
+        }catch(SQLException e1)
+        {
+            try {
+            System.out.print(e1.toString());
+            System.out.println("The current insertion failed.");
+            conn.rollback();
+            } catch (SQLException e2) {
+            System.out.println(e2.toString());
+            }
+        } catch(Exception e)
+        {
+            System.out.println("Then input is invalid.");
+            System.exit(0);
+        }
+
+        System.out.print("--------------------------------------");
     }
 }
-
 
