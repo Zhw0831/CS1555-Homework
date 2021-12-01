@@ -1,5 +1,5 @@
 
-package HW5;
+//package HW5;
 
 import java.sql.*;
 import java.util.Properties;
@@ -16,7 +16,7 @@ public class team07 {
         String url = "jdbc:postgresql://localhost:5432/"; //use for local
         Properties props = new Properties();
         props.setProperty("user", "postgres");
-        props.setProperty("password", "Sirshri1");
+        props.setProperty("password", "aaa496140768");
         Connection conn = DriverManager.getConnection(url, props);
 
         while (true) {
@@ -51,12 +51,15 @@ public class team07 {
                 case 10:
                     team07.showRegistry(conn);
                     continue;
+                case 11:
+                    System.exit(0);
             }
             System.out.println("-----------------------------------------");
         }
     }
 
     private static int menu() {
+        System.out.println("");
         System.out.println("Welcome to the US Forest Registry. " +
                 "In order to make a selection, enter the number corresponding to the menu option.");
         System.out.println("1: Add Forest");
@@ -69,6 +72,7 @@ public class team07 {
         System.out.println("8: Find Most Active Sensors");
         System.out.println("9: Add State");
         System.out.println("10: View Registry");
+        System.out.println("11: Exit the Menu");
         return inScan.nextInt();
 
     }
@@ -88,18 +92,25 @@ public class team07 {
         {
             case 1:
                 showTables.forest(conn);
+                break;
             case 2:
                 showTables.worker(conn);
+                break;
             case 3:
                 showTables.sensor(conn);
+                break;
             case 4:
                 showTables.state(conn);
+                break;
             case 5:
                 showTables.coverage(conn);
+                break;
             case 6:
                 showTables.report(conn);
+                break;
             case 7:
                 showTables.emergency(conn);
+                break;
         }
 
     }
@@ -114,8 +125,9 @@ public class team07 {
             while (!validName) {
                 System.out.print("Enter the name of the forest: ");
                 forestName = inScan.nextLine();
-                String compareName = String.format("SELECT name FROM FOREST WHERE name = %s", forestName);
-                ResultSet res1 = st.executeQuery(compareName);
+                PreparedStatement compareName = conn.prepareStatement("SELECT name FROM FOREST WHERE name = ?");
+                compareName.setString(1,forestName);
+                ResultSet res1 = compareName.executeQuery();
 
                 if (!res1.next())
                     validName = true;
@@ -128,7 +140,7 @@ public class team07 {
 
             boolean validAcid = false;
             while (!validAcid) {
-                System.out.print("Enter the acid level of the forest");
+                System.out.print("Enter the acid level of the forest: ");
                 acidLevel = inScan.nextDouble();
 
                 if (acidLevel >= 0 && acidLevel <= 1)
@@ -152,9 +164,12 @@ public class team07 {
                 System.out.print("Enter the maximum y boundary: ");
                 ymax = inScan.nextDouble();
 
-                String compareBound = "SELECT mbr_xmin, mbr_xmax, mbr_ymin, mbr_ymax FROM FOREST WHERE mbr_xmin = '" +
-                        xmin + "' AND mbr_xmax = '" + xmax + "' AND mbr_ymin = '" + ymin + "' AND mbr_ymax = '" + ymax + "'";
-                ResultSet res2 = st.executeQuery(compareBound);
+                PreparedStatement compareBound = conn.prepareStatement("SELECT mbr_xmin, mbr_xmax, mbr_ymin, mbr_ymax FROM FOREST WHERE mbr_xmin = ? AND mbr_xmax = ? AND mbr_ymin = ? AND mbr_ymax = ?");
+                compareBound.setDouble(1, xmin);
+                compareBound.setDouble(2, xmax);
+                compareBound.setDouble(3, ymin);
+                compareBound.setDouble(4, ymax);
+                ResultSet res2 = compareBound.executeQuery();
 
                 if (!res2.next())
                     validBound = true;
@@ -180,6 +195,7 @@ public class team07 {
             ResultSet res2 = query2.executeQuery();
             while (res2.next()) {
                 int confirmNum = res2.getInt("forest_no");
+                System.out.println("");
                 System.out.println(String.format("Forest %s successfully inserted with the forest number %d!", forestName, confirmNum));
             }
 
@@ -211,8 +227,9 @@ public class team07 {
                 System.out.print("Enter the Social Security Number (SSN) of the worker:");
                 ssn = inScan.nextLine();
 
-                String query1 = "SELECT ssn FROM WORKER WHERE ssn = '" + ssn + "'";
-                ResultSet res1 = st.executeQuery(query1);
+                PreparedStatement query1 = conn.prepareStatement("SELECT ssn FROM WORKER WHERE ssn = ?");
+                query1.setString(1, ssn);
+                ResultSet res1 = query1.executeQuery();
 
                 if (!res1.next())
                     validSsn = true;
@@ -225,8 +242,9 @@ public class team07 {
                 System.out.print("Please enter the worker's name: ");
                 name = inScan.nextLine();
 
-                String query2 = "SELECT name FROM WORKER WHERE name = '" + name + "'";
-                ResultSet res2 = st.executeQuery(query2);
+                PreparedStatement query2 = conn.prepareStatement("SELECT name FROM WORKER WHERE name = ?");
+                query2.setString(1,name);
+                ResultSet res2 = query2.executeQuery();
 
                 if (!res2.next())
                     validName = true;
@@ -264,8 +282,11 @@ public class team07 {
             conn.setAutoCommit(false);
             //add a method that checks if the state exists and if it does not
             //insert it into the table
-            String insert = "INSERT INTO WORKER VALUES ('" + ssn + "', '" + name + "', " + rank + ", '" + employingState + "');";
-            PreparedStatement insertWorker = conn.prepareStatement(insert);
+            PreparedStatement insertWorker = conn.prepareStatement("INSERT INTO WORKER VALUES (?, ?, ?, ?);");
+            insertWorker.setString(1, ssn);
+            insertWorker.setString(2, name);
+            insertWorker.setInt(3, rank);
+            insertWorker.setString(4, employingState);
 
             insertWorker.executeUpdate();
             conn.commit();
@@ -296,6 +317,7 @@ public class team07 {
     private static void insertSensor(Connection conn) throws SQLException {
         double x = 0, y = 0;
         String maintainer = "";
+        int energy_level = 0;
         Statement st = conn.createStatement();
         inScan.nextLine();
         try {
@@ -306,8 +328,10 @@ public class team07 {
                 System.out.print("Please enter the y coordinate of the sensor: ");
                 y = inScan.nextDouble();
 
-                String query1 = "SELECT x,y FROM SENSOR WHERE x = '" + x + "' AND y = '" + y + "'";
-                ResultSet res1 = st.executeQuery(query1);
+                PreparedStatement query1 = conn.prepareStatement("SELECT x,y FROM SENSOR WHERE x = ? AND y = ?");
+                query1.setDouble(1, x);
+                query1.setDouble(2, y);
+                ResultSet res1 = query1.executeQuery();
 
                 if (!res1.next())
                     validCord = true;
@@ -320,8 +344,9 @@ public class team07 {
                 System.out.print("Please enter the maintainer's Social Security Number: ");
                 maintainer = inScan.nextLine();
 
-                String query3 = "SELECT ssn FROM WORKER WHERE ssn = '" + maintainer + "'";
-                ResultSet res3 = st.executeQuery(query3);
+                PreparedStatement query3 = conn.prepareStatement("SELECT ssn FROM WORKER WHERE ssn = ?");
+                query3.setString(1,maintainer);
+                ResultSet res3 = query3.executeQuery();
 
                 if (res3.next())
                     validName = true;
@@ -349,16 +374,28 @@ public class team07 {
             System.out.println("Enter the time (hh24:mi)");
             String lr_time = inScan.next();
 
-            System.out.println("Enter the energy level of the sensor:");
-            int energy_level = inScan.nextInt();
+            boolean validEnergy = false;
+            while(!validEnergy) {
+                System.out.println("Enter the energy level of the sensor:");
+                energy_level = inScan.nextInt();
+
+                if(energy_level >=0 && energy_level<=100)
+                    validEnergy = true;
+                else
+                    System.out.println("The energy level must be between 0 and 100 inclusive.");
+            }
 
             String last_charged = lc_month + "/" + lc_day + "/" + lc_year + " " + lc_time;
             String last_read = lr_month + "/" + lr_day + "/" + lr_year + " " + lr_time;
 
-            String insert = String.format("INSERT INTO SENSOR(x,y,last_charged,maintainer, last_read,energy) VALUES (%f,%f,TO_TIMESTAMP('%s', 'mm/dd/yyyy hh24:mi'),\'" +
-                    "%s',TO_TIMESTAMP('%s', 'mm/dd/yyyy hh24:mi'),%d);", x, y, last_charged, maintainer, last_read, energy_level);
             conn.setAutoCommit(false);
-            PreparedStatement insertWorker = conn.prepareStatement(insert);
+            PreparedStatement insertWorker = conn.prepareStatement("INSERT INTO SENSOR (sensor_id, x, y, last_charged, maintainer, last_read, energy) VALUES (DEFAULT, ?, ?, TO_TIMESTAMP(?, 'mm/dd/yyyy hh24:mi'), ?, TO_TIMESTAMP(?, 'mm/dd/yyyy hh24:mi'), ?)");
+            insertWorker.setDouble(1, x);
+            insertWorker.setDouble(2, y);
+            insertWorker.setString(3, last_charged);
+            insertWorker.setString(4, maintainer);
+            insertWorker.setString(5, last_read);
+            insertWorker.setInt(6, energy_level);
             conn.commit();
 
             PreparedStatement query2 = conn.prepareStatement("SELECT sensor_id FROM SENSOR WHERE x = ? AND y = ?");
@@ -398,8 +435,9 @@ public class team07 {
             System.out.print("Enter the name of worker A: ");
             nameA = inScan.nextLine();
 
-            String query1 = "SELECT ssn, name FROM WORKER WHERE name = '" + nameA + "'";
-            ResultSet res1 = st.executeQuery(query1);
+            PreparedStatement query1 = conn.prepareStatement("SELECT ssn, name FROM WORKER WHERE name = ?");
+            query1.setString(1,nameA);
+            ResultSet res1 = query1.executeQuery();
 
             if (res1.next()) {
                 validNameA = true;
@@ -412,8 +450,9 @@ public class team07 {
             System.out.print("Enter the name of worker B: ");
             nameB = inScan.nextLine();
 
-            String query2 = "SELECT ssn,name FROM WORKER WHERE name = '" + nameB + "'";
-            ResultSet res2 = st.executeQuery(query2);
+            PreparedStatement query2 = conn.prepareStatement("SELECT ssn, name FROM WORKER WHERE name = ?");
+            query2.setString(1,nameB);
+            ResultSet res2 = query2.executeQuery();
 
             if (res2.next()) {
                 validNameB = true;
@@ -461,6 +500,7 @@ public class team07 {
             st.executeUpdate(deleteHolder);
             conn.commit();
 
+            System.out.println("");
             System.out.println("Your switch is successful.");
         } catch (SQLException e1) {
             try {
@@ -493,8 +533,10 @@ public class team07 {
                 System.out.print("Please enter the y coordinate of the sensor: ");
                 y = inScan.nextDouble();
 
-                String query1 = "SELECT x,y,sensor_id FROM SENSOR WHERE x = '" + x + "' AND y = '" + y + "'";
-                ResultSet res1 = st.executeQuery(query1);
+                PreparedStatement query1 = conn.prepareStatement("SELECT x,y,sensor_id FROM SENSOR WHERE x = ? AND y = ?");
+                query1.setDouble(1, x);
+                query1.setDouble(2, y);
+                ResultSet res1 = query1.executeQuery();
 
                 if (res1.next()) {
                     validCord = true;
@@ -553,6 +595,7 @@ public class team07 {
             query2.setInt(1, sensor_id);
             ResultSet res2 = query2.executeQuery();
             if (res2.next()) {
+                System.out.println("");
                 System.out.println("An emergency was reported after the sensor status was updated.");
             }
         } catch (SQLException e1) {
@@ -586,8 +629,9 @@ public class team07 {
                 forestName = inScan.nextLine();
                 //forestName = forestName.toUpperCase();
 
-                String compareName = "SELECT name, forest_no FROM FOREST WHERE name = '" + forestName + "'";
-                ResultSet res1 = st.executeQuery(compareName);
+                PreparedStatement compareName = conn.prepareStatement("SELECT name, forest_no FROM FOREST WHERE name = ?");
+                compareName.setString(1, forestName);
+                ResultSet res1 = compareName.executeQuery();
 
                 if (res1.next()) {
                     validName = true;
@@ -607,8 +651,10 @@ public class team07 {
                 state = inScan.nextLine();
                 state = state.toUpperCase();
 
-                String compareState = "SELECT state FROM COVERAGE WHERE forest_no = '" + forestNum + "' AND state = '" + state + "'";
-                ResultSet res2 = st.executeQuery(compareState);
+                PreparedStatement compareState = conn.prepareStatement("SELECT state FROM COVERAGE WHERE forest_no = ? AND state = ?");
+                compareState.setInt(1, forestNum);
+                compareState.setString(2, state);
+                ResultSet res2 = compareState.executeQuery();
 
                 if (res2.next())
                     validState = true;
@@ -625,6 +671,7 @@ public class team07 {
             updateCoverage.executeUpdate();
             conn.commit();
 
+            System.out.println("");
             System.out.println("Your update is successful.");
         } catch (SQLException e1) {
             try {
@@ -665,9 +712,9 @@ public class team07 {
                 validateK = true;
         }
 
-        String query = String.format("SELECT A.name, count(sensor_id) FROM (SELECT name, sensor_id FROM WORKER JOIN sensor ON worker.ssn = sensor.maintainer WHERE energy <= 2) AS A\n" +
-                "GROUP BY A.name ORDER BY count(sensor_id) DESC FETCH FIRST %d ROWS ONLY;", k);
-        res1 = st.executeQuery(query);
+        PreparedStatement query = conn.prepareStatement("SELECT A.name, count(sensor_id) FROM (SELECT name, sensor_id FROM WORKER JOIN sensor ON worker.ssn = sensor.maintainer WHERE energy <= 2) AS A GROUP BY A.name ORDER BY count(sensor_id) DESC FETCH FIRST ? ROWS ONLY;");
+        query.setInt(1, k);
+        res1 = query.executeQuery();
         String name;
         while (res1.next()) {
             name = res1.getString(1);
