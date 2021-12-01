@@ -151,3 +151,27 @@ CREATE TRIGGER enforceMaintainer_tri
     ON SENSOR
     FOR EACH ROW
 EXECUTE PROCEDURE checkMaintainer();
+--------------------------------------------------------------------
+----called by switch worker to check if workers are eligible to swap
+---Param: the names of the workers
+---Returns true if they are eligible to swap, false if not
+CREATE OR REPLACE FUNCTION checkSwapState(name1 varchar(30), name2 varchar(30))
+RETURNS BOOLEAN AS $$
+DECLARE
+w1 varchar(2);
+    w2 varchar(2);
+BEGIN
+SELECT W.employing_state INTO w1
+FROM WORKER W
+WHERE W.NAME = checkSwapState.name1;
+
+SELECT W2.employing_state INTO w2
+FROM WORKER W2
+WHERE W2.NAME = checkSwapState.name2;
+
+IF w1 = w2
+        THEN RETURN TRUE;
+ELSE RETURN FALSE;
+END IF;
+end;
+$$ LANGUAGE plpgsql;

@@ -1,5 +1,7 @@
-
+package HW5;
 //package HW5;
+
+import HW5.showTables;
 
 import java.sql.*;
 import java.util.Properties;
@@ -16,7 +18,7 @@ public class team07 {
         String url = "jdbc:postgresql://localhost:5432/"; //use for local
         Properties props = new Properties();
         props.setProperty("user", "postgres");
-        props.setProperty("password", "aaa496140768");
+        props.setProperty("password", "Sirshri1");
         Connection conn = DriverManager.getConnection(url, props);
 
         while (true) {
@@ -462,7 +464,7 @@ public class team07 {
         }
 
         Boolean rReturn;
-        CallableStatement properCase = conn.prepareCall("{ ? = call checkState( ?, ? ) }");
+        CallableStatement properCase = conn.prepareCall("{ ? = call checkSwapState( ?, ? ) }");
         properCase.registerOutParameter(1, Types.BIT);
         properCase.setString(2, nameA);
         properCase.setString(3, nameB);
