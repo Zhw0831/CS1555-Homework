@@ -1,4 +1,4 @@
-//package HW5;
+package HW5;
 
 import java.sql.*;
 
@@ -112,7 +112,7 @@ public class showTables {
         int area;
 
         System.out.println(String.format("%15s%15s%15s%15s",
-                "|name|", "|state|", "|area|", "|percentage|"));
+                "|forest_no|", "|state|", "|area|", "|percentage|"));
 
         while (res2.next()) {
             forestNum = res2.getString("forest_no");

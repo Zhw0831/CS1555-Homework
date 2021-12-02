@@ -1,5 +1,7 @@
-
-//package HW5;
+//Sushruti Bansod (sdb88)
+//Zhen Wu (zhw87)
+//Team 7
+package HW5;
 
 import java.sql.*;
 import java.util.Properties;
@@ -16,7 +18,7 @@ public class team07 {
         String url = "jdbc:postgresql://localhost:5432/"; //use for local
         Properties props = new Properties();
         props.setProperty("user", "postgres");
-        props.setProperty("password", "aaa496140768");
+        props.setProperty("password", "***********");
         Connection conn = DriverManager.getConnection(url, props);
 
         while (true) {
@@ -184,6 +186,7 @@ public class team07 {
             while (res3.next()) {
                 states.add(res3.getString(1));
             }
+            inScan.nextLine();
             boolean validState = false;
             while (!validState) {
                 System.out.print("Please enter the state that the forest is in: ");
@@ -223,12 +226,13 @@ public class team07 {
                 System.out.println("");
                 System.out.println(String.format("Forest %s successfully inserted with the forest number %d!", forestName, confirmNum));
             }
-
+            int num = confirmNum;
             conn.setAutoCommit(false);
-            PreparedStatement insertCoverage = conn.prepareStatement("INSERT INTO COVERAGE (forest_no, state, percentage, area) VALUES (?, ?, 1, ?);");
-            insertForest.setInt(1, confirmNum);
-            insertForest.setString(2, forestState);
-            insertForest.setDouble(3, area);
+            PreparedStatement insertCoverage = conn.prepareStatement("INSERT INTO COVERAGE (forest_no, state, percentage, area) VALUES (?, ?, ?, ?);");
+            insertCoverage.setInt(1, num);
+            insertCoverage.setString(2, forestState);
+            insertCoverage.setDouble(3,1.0);
+            insertCoverage.setDouble(4, area);
 
             insertCoverage.executeUpdate();
             conn.commit();
